@@ -425,6 +425,13 @@ class Counter(dict):
             addend[key] = -1 * y[key]
         return addend
 
+
+class CounterWithInfinityDefault(Counter):
+    def __getitem__(self, idx):
+        self.setdefault(idx, int("inf"))
+        return dict.__getitem__(self, idx)
+
+
 def raiseNotDefined():
     fileName = inspect.stack()[1][1]
     line = inspect.stack()[1][2]
