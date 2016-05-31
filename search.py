@@ -162,19 +162,48 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
+
+def inversed_heuristic(heuristic, state, problem):
+    h = heuristic(state, problem)
+    if h==0:
+        return float("inf")
+    else:
+        return 1/h
+
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     closedSet = []
-    openedSet = [problem.getStartState()]
+    opened_set = util.PriorityQueueWithFunction(lambda s: inversed_heuristic(heuristic, s[0], problem))
+    opened_set_states = []
+    opened_set.push((problem.getStartState(),'',0))
+    opened_set_states.append(problem.getStartState())
     cameFrom = dict()
 
     gScore = util.CounterWithInfinityDefault()
     gScore[problem.getStartState()] = 0
-    fScore = util.CounterWithInfinityDefault()
-    fScore[problem.getStartState()] = heuristic(problem.getStartState(), problem)
 
-
-    util.raiseNotDefined()
+    while not opened_set.isEmpty():
+        current = opened_set.pop()
+        opened_set_states.remove(current[0])
+        if problem.isGoalState(current[0]):
+            path = [current[1]]
+            while cameFrom.has_key(current[0]):
+                current = cameFrom.get(current[0])
+                path.append(current[1])
+            return path.reverse()
+        closedSet.append(current)
+        for neighbor in problem.getSuccessors(current[0]):
+            if neighbor in closedSet:
+                continue
+            tentative_gScore = gScore[current[0]] + neighbor[2]
+            if neighbor[0] not in opened_set_states:
+                opened_set.push(neighbor)
+                opened_set_states.append(neighbor[0])
+            elif tentative_gScore >= gScore[neighbor]:
+                continue
+            cameFrom[neighbor[0]] = current
+            gScore[neighbor[0]] = tentative_gScore
+    return []
 
 
 # Abbreviations

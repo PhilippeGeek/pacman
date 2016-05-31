@@ -428,7 +428,7 @@ class Counter(dict):
 
 class CounterWithInfinityDefault(Counter):
     def __getitem__(self, idx):
-        self.setdefault(idx, int("inf"))
+        self.setdefault(idx, float("inf"))
         return dict.__getitem__(self, idx)
 
 
