@@ -208,7 +208,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
     while len(opened_set) > 0:
 
-        current = max(opened_set)
+        current = min(opened_set)
         opened_set.remove(current)
 
         if problem.isGoalState(current.position):
@@ -231,7 +231,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             elif in_opened_set and opened_set[opened_set.index(node)].cost < current.cost:
                 continue
             else:
-                v_cost = current.cost + 1
+                v_cost = current.cost + neighbor[2]
                 v_heuristic = v_cost + heuristic(node, problem)
                 if in_closed_set or in_opened_set:
                     if in_opened_set:
