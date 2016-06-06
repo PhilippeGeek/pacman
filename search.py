@@ -20,6 +20,7 @@ import copy
 
 import util
 
+
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -71,7 +72,8 @@ def tinyMazeSearch(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s, s, w, s, w, w, s, w]
+    return [s, s, w, s, w, w, s, w]
+
 
 def depthFirstSearch(problem):
     """
@@ -120,7 +122,7 @@ def breadthFirstSearch(problem):
     queue = util.Queue()
     visited = [problem.getStartState()]
 
-    queue.push((problem.getStartState(),[]))
+    queue.push((problem.getStartState(), []))
 
     while not queue.isEmpty():
         (current, path) = queue.pop()
@@ -130,7 +132,7 @@ def breadthFirstSearch(problem):
                 if problem.isGoalState(childNode[0]):
                     return path + [childNode[1]]
                 else:
-                    queue.push((childNode[0], path+[childNode[1]]))
+                    queue.push((childNode[0], path + [childNode[1]]))
 
     return []
 
@@ -140,7 +142,7 @@ def uniformCostSearch(problem):
     queue = util.PriorityQueue()
     visited = [problem.getStartState()]
 
-    queue.push((problem.getStartState(),[]),0)
+    queue.push((problem.getStartState(), []), 0)
 
     while not queue.isEmpty():
         (current, path) = queue.pop()
@@ -155,6 +157,7 @@ def uniformCostSearch(problem):
 
     return []
 
+
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
@@ -165,44 +168,86 @@ def nullHeuristic(state, problem=None):
 
 def inversed_heuristic(heuristic, state, problem):
     h = heuristic(state, problem)
-    if h==0:
+    if h == 0:
         return float("inf")
     else:
-        return 1/h
+        return 1 / h
+
+
+class AStarSearchNode:
+    def __init__(self, pos, cost, heuristic, operation_to_reach=None):
+        self.position = pos
+        self.cost = cost
+        self.heuristic = heuristic
+        self.move = operation_to_reach
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.position == other.position
+        else:
+            return self.position == other
+
+    def __ne__(self, other):
+        if self.__eq__(other):
+            return False
+        else:
+            return True
+
+    def __gt__(self, other):
+        return self.heuristic > other.heuristic
+
+    def __lt__(self, other):
+        return self.heuristic < other.heuristic
+
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    closedSet = []
-    opened_set = util.PriorityQueueWithFunction(lambda s: inversed_heuristic(heuristic, s[0], problem))
-    opened_set_states = []
-    opened_set.push((problem.getStartState(),'',0))
-    opened_set_states.append(problem.getStartState())
-    cameFrom = dict()
+    closed_set = []
+    opened_set = [AStarSearchNode(problem.getStartState(), 0, heuristic(problem.getStartState(), problem))]
+    path_storage = dict()
 
-    gScore = util.CounterWithInfinityDefault()
-    gScore[problem.getStartState()] = 0
+    while len(opened_set) > 0:
 
-    while not opened_set.isEmpty():
-        current = opened_set.pop()
-        opened_set_states.remove(current[0])
-        if problem.isGoalState(current[0]):
-            path = [current[1]]
-            while cameFrom.has_key(current[0]):
-                current = cameFrom.get(current[0])
-                path.append(current[1])
-            return path.reverse()
-        closedSet.append(current)
-        for neighbor in problem.getSuccessors(current[0]):
-            if neighbor in closedSet:
+        current = max(opened_set)
+        opened_set.remove(current)
+
+        if problem.isGoalState(current.position):
+            position = current.position
+            path = []
+            while path_storage.has_key(position):
+                path.append(path_storage[position][1])
+                position = path_storage[position][0]
+            final_path = []
+            for action in reversed(path):
+                final_path.append(action)
+            return final_path
+        closed_set.append(current)
+        for neighbor in problem.getSuccessors(current.position):
+            node = neighbor[0]
+            in_closed_set = node in closed_set
+            in_opened_set = node in opened_set
+            if in_closed_set and closed_set[closed_set.index(node)].cost < current.cost:
                 continue
-            tentative_gScore = gScore[current[0]] + neighbor[2]
-            if neighbor[0] not in opened_set_states:
-                opened_set.push(neighbor)
-                opened_set_states.append(neighbor[0])
-            elif tentative_gScore >= gScore[neighbor]:
+            elif in_opened_set and opened_set[opened_set.index(node)].cost < current.cost:
                 continue
-            cameFrom[neighbor[0]] = current
-            gScore[neighbor[0]] = tentative_gScore
+            else:
+                v_cost = current.cost + 1
+                v_heuristic = v_cost + heuristic(node, problem)
+                if in_closed_set or in_opened_set:
+                    if in_opened_set:
+                        v = opened_set[opened_set.index(node)]
+                    else:
+                        v = closed_set[closed_set.index(node)]
+                    v.cost = v_cost
+                    v.heuristic = v_heuristic
+                    v.move = neighbor[1]
+                    if in_closed_set:
+                        closed_set.remove(v)
+                        opened_set.append(v)
+                else:
+                    v = AStarSearchNode(node, v_cost, v_heuristic, neighbor[1])
+                    opened_set.append(v)
+                path_storage[v.position] = (current.position, v.move)
     return []
 
 
