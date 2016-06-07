@@ -234,7 +234,7 @@ class StarSearch(Agent):
                     continue
                 else:
                     v_cost = current.cost + neighbor[2]
-                    v_heuristic = v_cost + -3*self.food_heuristic[node[1]][node[0]]
+                    v_heuristic = v_cost + -3*self.food_heuristic[node[1]][node[0]] + self.manhattanHeuristic(start, node)
                     if in_closed_set or in_opened_set:
                         if in_opened_set:
                             v = opened_set[opened_set.index(node)]
