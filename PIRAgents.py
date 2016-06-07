@@ -38,6 +38,37 @@ class RandomHeuristicAgent(Agent):
         self.food_heuristic = [[state.hasFood(j,i) for j in range(0, self.map_width)] for i in range(0, self.map_height)]
         self.ghost_heuristic = [[0 for j in range(0, self.map_width)] for i in range(0, self.map_height)]
 
+    def compute_ghost_heuristic(self, state):
+        """
+
+        :type state: GameState
+        """
+        self.ghost_heuristic = [[0 for j in range(0, self.map_width)] for i in range(0, self.map_height)]
+        for ghost_index in range(1,state.getNumAgents()):
+            position = state.getGhostPosition(ghost_index)
+            position = (int(position[0]), int(position[1]))
+            ghost_state = state.getGhostState(ghost_index)
+            heuristic_val = 20
+            self.ghost_heuristic[int(position[1])][int(position[0])] += heuristic_val
+            for x in range(position[0]-2, position[0]+2):
+                for y in range(position[1]-2, position[1]+2):
+                    self.ghost_heuristic[y][x] += heuristic_val
+
+
     def getAction(self, state):
         "The agent receives a GameState (defined in pacman.py)."
-        return random.choice(state.getLegalPacmanActions())
+        self.compute_ghost_heuristic(state)
+        self.food_heuristic = [[int(state.hasFood(j,i)) for j in range(0, self.map_width)] for i in range(0, self.map_height)]
+        self.heuristic = [[-1 * self.food_heuristic[y][x] + self.ghost_heuristic[y][x] for x in range(0, self.map_width)] for y in range(0, self.map_height)]
+        choice = random.choice(state.getLegalPacmanActions())
+        while self.not_acceptable(choice, state):
+            choice = random.choice(state.getLegalPacmanActions())
+        return choice
+
+    def not_acceptable(self, choice, state):
+        """
+
+        :type state: GameState
+        """
+        final = state.getPacmanPosition() + Actions.directionToVector(choice)
+        return self.heuristic[final[1]][final[0]] > 10
