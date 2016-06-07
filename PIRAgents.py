@@ -86,6 +86,7 @@ class StarSearch(Agent):
 
     def __init__(self):
         Agent.__init__(self)
+        self.recompute_delay = 0
         self.visited = []
         self.actions = []
         self.map = []
@@ -127,13 +128,13 @@ class StarSearch(Agent):
             heuristic_val = 1
             if ghost_state.scaredTimer is not 0:
                 heuristic_val -= ghost_state.scaredTimer
-            self.ghost_cost[int(position[1])][int(position[0])] += 3*heuristic_val
+            self.ghost_cost[int(position[1])][int(position[0])] += 4*heuristic_val
             near_set = [(int(position[0]),int(position[1]))]
             for x in range(position[0]-1, min([position[0]+2,self.map_width])):
                 for y in range(position[1]-1, min([position[1] + 2, self.map_height])):
                     if (x,y) not in near_set:
                         near_set.append((x,y))
-                        self.ghost_cost[y][x] += 2 * heuristic_val
+                        self.ghost_cost[y][x] += 3 * heuristic_val
             for x in range(max(0,position[0]-3), min([position[0]+4,self.map_width])):
                 for y in range(max(0, position[1] - 3), min([position[1] + 4, self.map_height])):
                     if (x, y) not in near_set:
@@ -154,24 +155,30 @@ class StarSearch(Agent):
         self.visited[int(pos[1])][int(pos[0])]+=1
         if len(self.actions)>0:
             pop = self.actions.pop(0)
-            if pop in state.getLegalPacmanActions():
+            if self.recompute_delay < 250 and pop in state.getLegalPacmanActions():
+                self.recompute_delay += 1
                 if pos not in self.ghost_danger:
                     print pop
                     return pop
                 else:
                     print 'Oh shit!'
             self.actions = []
-
+        self.recompute_delay = 0
         self.food_heuristic = [[int(state.hasFood(j,i)) for j in range(0, self.map_width)] for i in range(0, self.map_height)]
         for x in range(0, self.map_width):
             for y in range(0, self.map_height):
-                self.f[(x,y)] = -1000* self.food_heuristic[y][x] + 0.1*self.ghost_cost[y][x] + 10*self.manhattanHeuristic(pos, (x,y))
+                self.f[(x,y)] = -1000* self.food_heuristic[y][x] + 0.1*self.ghost_cost[y][x] + 100*self.manhattanHeuristic(pos, (x,y))
 
-        print 'Compute'
         if not state.hasFood(self.current_target[0], self.current_target[1]) or self.current_target in self.ghost_danger:
             best_value = min(self.f.itervalues())
-            self.current_target = random.choice([k for k, v in self.f.iteritems() if v == best_value])
+            best_solutions = [k for k, v in self.f.iteritems() if v == best_value]
+            distance_for_solutions = dict((k,self.manhattanHeuristic(pos,k)) for k in best_solutions)
+            best_value = min(distance_for_solutions.itervalues())
+            best_solutions = [k for k, v in distance_for_solutions.iteritems() if v == best_value]
+            self.current_target = random.choice(best_solutions)
+
         self.actions = self.aStarSearch(state.getPacmanPosition(), self.current_target, state)
+        if len(self.actions) == 0: return Directions.STOP
         pop=self.actions.pop(0)
         print pop
         coordinates = [state.getPacmanPosition(), Actions.directionToVector(pop)]
@@ -266,7 +273,7 @@ class StarSearch(Agent):
             if not state.hasWall(nextx, nexty):
                 nextState = (nextx, nexty)
                 if self.ghost_cost[nexty][nextx] > 0:
-                    cost = 1 + 10000 * self.ghost_cost[nexty][nextx]
+                    cost = 1 + 10 * self.ghost_cost[nexty][nextx]
                 else:
                     cost = 1
                 successors.append((nextState, action, cost))
