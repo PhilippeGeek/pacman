@@ -62,7 +62,7 @@ class RandomHeuristicAgent(Agent):
         "The agent receives a GameState (defined in pacman.py)."
         self.compute_ghost_heuristic(state)
         self.food_heuristic = [[int(state.hasFood(j,i)) for j in range(0, self.map_width)] for i in range(0, self.map_height)]
-        self.heuristic = [[-10 * self.food_heuristic[y][x] + 90*self.ghost_heuristic[y][x] for x in range(0, self.map_width)] for y in range(0, self.map_height)]
+        self.heuristic = [[-5 * self.food_heuristic[y][x] + 5*self.ghost_heuristic[y][x] for x in range(0, self.map_width)] for y in range(0, self.map_height)]
 
         best = 999999999
         best_choice = Directions.STOP
