@@ -48,10 +48,13 @@ class RandomHeuristicAgent(Agent):
             position = state.getGhostPosition(ghost_index)
             position = (int(position[0]), int(position[1]))
             ghost_state = state.getGhostState(ghost_index)
-            heuristic_val = 20
+            heuristic_val = 1
             self.ghost_heuristic[int(position[1])][int(position[0])] += heuristic_val
-            for x in range(position[0], position[0]):
-                for y in range(position[1], position[1]):
+            for x in range(position[0]-1, position[0]+1):
+                for y in range(position[1]-1, position[1]+1):
+                    self.ghost_heuristic[y][x] += heuristic_val
+            for x in range(position[0]-2, position[0]+2):
+                for y in range(position[1]-2, position[1]+2):
                     self.ghost_heuristic[y][x] += heuristic_val
 
 
@@ -59,12 +62,13 @@ class RandomHeuristicAgent(Agent):
         "The agent receives a GameState (defined in pacman.py)."
         self.compute_ghost_heuristic(state)
         self.food_heuristic = [[int(state.hasFood(j,i)) for j in range(0, self.map_width)] for i in range(0, self.map_height)]
-        self.heuristic = [[-1 * self.food_heuristic[y][x] + self.ghost_heuristic[y][x] for x in range(0, self.map_width)] for y in range(0, self.map_height)]
+        self.heuristic = [[-10 * self.food_heuristic[y][x] + 90*self.ghost_heuristic[y][x] for x in range(0, self.map_width)] for y in range(0, self.map_height)]
 
-        best = 99999999999
-        best_choice = random.choice(self.getPossibleActions(state))
+        best = 999999999
+        best_choice = Directions.STOP
         for move in self.getPossibleActions(state):
-            final = state.getPacmanPosition() + Actions.directionToVector(move)
+            coordinates = [state.getPacmanPosition(), Actions.directionToVector(move)]
+            final = [sum([int(z) for z in x]) for x in zip(*coordinates)]
             if self.heuristic[final[1]][final[0]] < best:
                 best = self.heuristic[final[1]][final[0]]
                 best_choice = move
