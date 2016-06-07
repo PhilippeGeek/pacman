@@ -50,8 +50,8 @@ class RandomHeuristicAgent(Agent):
             ghost_state = state.getGhostState(ghost_index)
             heuristic_val = 20
             self.ghost_heuristic[int(position[1])][int(position[0])] += heuristic_val
-            for x in range(position[0]-2, position[0]+2):
-                for y in range(position[1]-2, position[1]+2):
+            for x in range(position[0], position[0]):
+                for y in range(position[1], position[1]):
                     self.ghost_heuristic[y][x] += heuristic_val
 
 
@@ -60,10 +60,22 @@ class RandomHeuristicAgent(Agent):
         self.compute_ghost_heuristic(state)
         self.food_heuristic = [[int(state.hasFood(j,i)) for j in range(0, self.map_width)] for i in range(0, self.map_height)]
         self.heuristic = [[-1 * self.food_heuristic[y][x] + self.ghost_heuristic[y][x] for x in range(0, self.map_width)] for y in range(0, self.map_height)]
-        choice = random.choice(state.getLegalPacmanActions())
-        while self.not_acceptable(choice, state):
-            choice = random.choice(state.getLegalPacmanActions())
-        return choice
+
+        best = 99999999999
+        best_choice = random.choice(self.getPossibleActions(state))
+        for move in self.getPossibleActions(state):
+            final = state.getPacmanPosition() + Actions.directionToVector(move)
+            if self.heuristic[final[1]][final[0]] < best:
+                best = self.heuristic[final[1]][final[0]]
+                best_choice = move
+            elif self.heuristic[final[1]][final[0]] == best and random.randint(1,3) == 2:
+                best_choice = move
+        return best_choice
+
+    def getPossibleActions(self, state):
+        actions = state.getLegalPacmanActions()
+        actions.remove(Directions.STOP)
+        return actions
 
     def not_acceptable(self, choice, state):
         """
