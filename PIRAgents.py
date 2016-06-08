@@ -158,10 +158,7 @@ class StarSearch(Agent):
             if self.recompute_delay < 250 and pop in state.getLegalPacmanActions():
                 self.recompute_delay += 1
                 if pos not in self.ghost_danger:
-                    print pop
                     return pop
-                else:
-                    print 'Oh shit!'
             self.actions = []
         self.recompute_delay = 0
         self.food_heuristic = [[int(state.hasFood(j,i)) for j in range(0, self.map_width)] for i in range(0, self.map_height)]
@@ -180,7 +177,7 @@ class StarSearch(Agent):
         self.actions = self.aStarSearch(state.getPacmanPosition(), self.current_target, state)
         if len(self.actions) == 0: return Directions.STOP
         pop=self.actions.pop(0)
-        print pop
+
         coordinates = [state.getPacmanPosition(), Actions.directionToVector(pop)]
         final = [sum([int(z) for z in x]) for x in zip(*coordinates)]
         a = self.getPossibleActions(state)
