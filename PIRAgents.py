@@ -86,6 +86,7 @@ class StarSearch(Agent):
 
     def __init__(self):
         Agent.__init__(self)
+        self.has_scared_ghosts = False
         self.recompute_delay = 0
         self.visited = []
         self.actions = []
@@ -112,6 +113,7 @@ class StarSearch(Agent):
         self.map_width = self.map.width
         self.visited = [[0 for j in range(0, self.map_width)] for i in range(0, self.map_height)]
         self.ghost_danger = []
+        self.capsules = [(int(x),int(y)) for x,y in state.getCapsules()]
 
 
     def compute_ghost_heuristic(self, state):
@@ -120,6 +122,7 @@ class StarSearch(Agent):
         :type state: GameState
         """
         self.ghost_danger = []
+        self.has_scared_ghosts = False
         self.ghost_cost = [[0 for j in range(0, self.map_width)] for i in range(0, self.map_height)]
         for ghost_index in range(1,state.getNumAgents()):
             position = state.getGhostPosition(ghost_index)
@@ -127,8 +130,10 @@ class StarSearch(Agent):
             ghost_state = state.getGhostState(ghost_index)
             heuristic_val = 1
             if ghost_state.scaredTimer is not 0:
-                heuristic_val -= ghost_state.scaredTimer
+                self.has_scared_ghosts = True
+                heuristic_val -= ghost_state.scaredTimer/5
             self.ghost_cost[int(position[1])][int(position[0])] += 4*heuristic_val
+            if heuristic_val < 1: continue
             near_set = [(int(position[0]),int(position[1]))]
             for x in range(position[0]-1, min([position[0]+2,self.map_width])):
                 for y in range(position[1]-1, min([position[1] + 2, self.map_height])):
@@ -152,6 +157,8 @@ class StarSearch(Agent):
         self.compute_ghost_heuristic(state)
 
         pos = state.getPacmanPosition()
+        if len(self.capsules) > 0 and pos in self.capsules:
+            self.capsules.remove(pos)
         self.visited[int(pos[1])][int(pos[0])]+=1
         if len(self.actions)>0:
             pop = self.actions.pop(0)
@@ -164,7 +171,9 @@ class StarSearch(Agent):
         self.food_heuristic = [[int(state.hasFood(j,i)) for j in range(0, self.map_width)] for i in range(0, self.map_height)]
         for x in range(0, self.map_width):
             for y in range(0, self.map_height):
-                self.f[(x,y)] = -1000* self.food_heuristic[y][x] + 0.1*self.ghost_cost[y][x] + 100*self.manhattanHeuristic(pos, (x,y))
+                self.f[(x,y)] = -500* self.food_heuristic[y][x] + 2*self.ghost_cost[y][x] + 1*self.manhattanHeuristic(pos, (x,y))
+                if not self.has_scared_ghosts and len(self.capsules)>0 and (x,y) in self.capsules:
+                    self.f[(x,y)] -= 250
 
         if not state.hasFood(self.current_target[0], self.current_target[1]) or self.current_target in self.ghost_danger:
             best_value = min(self.f.itervalues())
@@ -175,7 +184,8 @@ class StarSearch(Agent):
             self.current_target = random.choice(best_solutions)
 
         self.actions = self.aStarSearch(state.getPacmanPosition(), self.current_target, state)
-        if len(self.actions) == 0: return Directions.STOP
+        if len(self.actions) == 0:
+            return Directions.STOP
         pop=self.actions.pop(0)
 
         coordinates = [state.getPacmanPosition(), Actions.directionToVector(pop)]
