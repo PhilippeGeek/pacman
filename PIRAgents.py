@@ -86,6 +86,7 @@ class StarSearch(Agent):
 
     def __init__(self):
         Agent.__init__(self)
+        self.ghost_fare_level = 2
         self.has_scared_ghosts = False
         self.recompute_delay = 0
         self.visited = []
@@ -132,14 +133,14 @@ class StarSearch(Agent):
             if ghost_state.scaredTimer is not 0:
                 self.has_scared_ghosts = True
                 heuristic_val -= ghost_state.scaredTimer/5
-            self.ghost_cost[int(position[1])][int(position[0])] += 4*heuristic_val
+            self.ghost_cost[int(position[1])][int(position[0])] += 5*heuristic_val
             if heuristic_val < 1: continue
             near_set = [(int(position[0]),int(position[1]))]
             for x in range(position[0]-1, min([position[0]+2,self.map_width])):
                 for y in range(position[1]-1, min([position[1] + 2, self.map_height])):
                     if (x,y) not in near_set:
                         near_set.append((x,y))
-                        self.ghost_cost[y][x] += 3 * heuristic_val
+                        self.ghost_cost[y][x] += 3* heuristic_val
             for x in range(max(0,position[0]-3), min([position[0]+4,self.map_width])):
                 for y in range(max(0, position[1] - 3), min([position[1] + 4, self.map_height])):
                     if (x, y) not in near_set:
@@ -191,8 +192,19 @@ class StarSearch(Agent):
         coordinates = [state.getPacmanPosition(), Actions.directionToVector(pop)]
         final = [sum([int(z) for z in x]) for x in zip(*coordinates)]
         a = self.getPossibleActions(state)
-        scared_of = 1
-        while self.ghost_cost[final[1]][final[0]] > scared_of:
+        scared_of = 2
+        # if self.ghost_cost[final[1]][final[0]] >= self.ghost_fare_level:
+        #     self.ghost_fare_level -= 0.1
+        #     where_can_we_escape = [(x[0], (int(pos[0]+x[1][0]),int(pos[1]+x[1][1]))) for x in [(pop, Actions.directionToVector(pop)) for pop in self.getPossibleActions(state)]]
+        #     best = Directions.STOP
+        #     best_value = self.ghost_cost[final[1]][final[0]]
+        #     for escape in where_can_we_escape:
+        #         if self.ghost_cost[escape[1][1]][escape[1][0]] < best_value:
+        #             best_value = self.ghost_cost[escape[1][1]][escape[1][0]]
+        #             best = escape[0]
+        #     pop = best
+        # else: self.ghost_fare_level += 1/1000
+        while self.ghost_cost[final[1]][final[0]] >= scared_of:
             scared_of = self.ghost_cost[final[1]][final[0]]
             self.actions = []
             a.remove(pop)
